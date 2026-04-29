@@ -79,7 +79,7 @@ public class Renderer extends AbstractRenderer {
 
 //      *************  Textures *************
         try {
-            textureBricks = new OGLTexture2D("./textures/bricks.jpg");
+            textureBricks = new OGLTexture2D("textures/bricks.jpg");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
