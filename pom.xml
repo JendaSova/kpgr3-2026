@@ -123,6 +123,7 @@
                   </configuration>
                   <executions>
                       <execution>
+                          <id>run-app</id>
                           <goals>
                               <goal>java</goal>
                           </goals>
