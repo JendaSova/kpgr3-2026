@@ -18,7 +18,7 @@ void main() {
     float z = 0.1 * cos(sqrt(20 * pow(pos.x, 2) + 20 * pow(pos.y, 2)));
     gl_Position = uProj * uView * vec4(pos, z, 1.0);
 
-    // 2) Koule
+//     2) Koule
 //    // rozsah x <0,1> na zenit <0, PI>
 //    float zenith  = inPosition.y * PI;
 //    // rozsah y <0,1> na azimut <0,2PI>

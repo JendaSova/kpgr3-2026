@@ -7,6 +7,5 @@ out vec4 outColor;
 uniform sampler2D textureBricks;
 
 void main() {
-//    outColor = vec4(1, 1, 1, 1);
     outColor = texture(textureBricks, uv);
 }
