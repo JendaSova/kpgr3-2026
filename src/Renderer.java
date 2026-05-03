@@ -30,7 +30,7 @@ import static org.lwjgl.opengl.GL30.*;
 public class Renderer extends AbstractRenderer {
 
     private int shaderGrid, shaderObj, shaderLight;
-    private int shaderGeometry, shaderSSAO, shaderBlur, shaderLighting;
+    private int shaderGeometry, shaderGeometryObj, shaderSSAO, shaderBlur, shaderLighting;
 
     private Solid grid, lightMarker, fullscreenQuad;
     private OGLModelOBJ elephant;
@@ -56,7 +56,7 @@ public class Renderer extends AbstractRenderer {
     private int fragMode = 0;
     private boolean ambientOn = true, diffuseOn = true, specularOn = true, spotOn = true;
     private boolean animOn = true;
-    private boolean ssaoOn = true;
+    private boolean ssaoOn = false;
     private boolean showSSAO = false;
     private float time = 0.0f, orbitAngle = 0.0f;
 
@@ -81,7 +81,8 @@ public class Renderer extends AbstractRenderer {
         shaderGrid      = ShaderUtils.loadProgram("/shaders/grid/grid");
         shaderObj       = ShaderUtils.loadProgram("/shaders/obj/obj");
         shaderLight     = ShaderUtils.loadProgram("/shaders/light/light");
-        shaderGeometry  = ShaderUtils.loadProgram("/shaders/ssao/geometry");
+        shaderGeometry    = ShaderUtils.loadProgram("/shaders/ssao/geometry");
+        shaderGeometryObj = ShaderUtils.loadProgram("/shaders/ssao/geometry_obj", "/shaders/ssao/geometry", null, null, null, null);
         shaderSSAO      = ShaderUtils.loadProgram("/shaders/ssao/quad", "/shaders/ssao/ssao", null, null, null, null, (p) -> {});
         shaderBlur      = ShaderUtils.loadProgram("/shaders/ssao/quad", "/shaders/ssao/blur", null, null, null, null, (p) -> {});
         shaderLighting  = ShaderUtils.loadProgram("/shaders/ssao/quad", "/shaders/ssao/lighting", null, null, null, null, (p) -> {});
@@ -94,7 +95,7 @@ public class Renderer extends AbstractRenderer {
 
         grid           = new Grid(60, 60);
         lightMarker    = new Grid(4, 4);
-        fullscreenQuad = new Grid(1, 1);
+        fullscreenQuad = new Grid(2, 2);
 
         try { elephant = new OGLModelOBJ("/obj/ElephantBody.obj"); }
         catch (Exception e) { System.err.println("OBJ nenacten: " + e.getMessage()); }
@@ -196,11 +197,13 @@ public class Renderer extends AbstractRenderer {
 
         if (elephant != null) {
             double oY = Math.sin(orbitAngle) * 150, oZ = Math.cos(orbitAngle) * 150;
-            setUniformMat4(shaderGeometry, "uModel",
+            glUseProgram(shaderGeometryObj);
+            setUniformMat4(shaderGeometryObj, "uView",  viewArr);
+            setUniformMat4(shaderGeometryObj, "uProj",  projArr);
+            setUniformMat4(shaderGeometryObj, "uModel",
                 new Mat4Transl(0, oY, oZ).mul(new Mat4RotX(Math.toRadians(180))).mul(new Mat4Scale(0.01)).floatArray());
-            setUniform1i(shaderGeometry, "uFunction", currentFunction);
-            if (textureBricks != null) textureBricks.bind(shaderGeometry, "uTexture");
-            elephant.getBuffers().draw(GL_TRIANGLES, shaderGeometry);
+            if (textureBricks != null) textureBricks.bind(shaderGeometryObj, "uTexture");
+            elephant.getBuffers().draw(GL_TRIANGLES, shaderGeometryObj);
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -385,7 +388,7 @@ public class Renderer extends AbstractRenderer {
                 if (key == GLFW_KEY_4) spotOn     = !spotOn;
                 if (key == GLFW_KEY_T) animOn     = !animOn;
                 if (key == GLFW_KEY_Q) ssaoOn     = !ssaoOn;
-                if (key == GLFW_KEY_E) showSSAO   = !showSSAO;
+                if (key == GLFW_KEY_E) { showSSAO = !showSSAO; if (showSSAO) ssaoOn = true; }
                 if (key == GLFW_KEY_I) lightY += 0.2f; if (key == GLFW_KEY_K) lightY -= 0.2f;
                 if (key == GLFW_KEY_J) lightX -= 0.2f; if (key == GLFW_KEY_L) lightX += 0.2f;
                 if (key == GLFW_KEY_U) lightZ += 0.2f; if (key == GLFW_KEY_O) lightZ -= 0.2f;
