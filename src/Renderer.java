@@ -54,6 +54,7 @@ public class Renderer extends AbstractRenderer {
     private boolean spotOn     = true;
     private boolean animOn     = true;   // animace uniform proměnné (čas)
     private float   time       = 0.0f;
+    private float   orbitAngle = 0.0f;  // samostatný úhel pro oběh slona
 
     // Pozice světla — pohybuje se klávesami IJKL
     private float lightX =  1.5f;
@@ -110,6 +111,7 @@ public class Renderer extends AbstractRenderer {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (animOn) time += 0.01f;
+        if (animOn) orbitAngle += 0.02f;  // rychlost oběhu slona
 
         // --- Nastavení polygon módu ---
         if (renderMode == 0)      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -162,8 +164,13 @@ public class Renderer extends AbstractRenderer {
         // ══ Render OBJ modelu (slon) ══
         if (elephant != null) {
             glUseProgram(shaderObj);
-            float[] modelElephant = new Mat4Transl(-3, 0, 0)
-                    .mul(new Mat4RotX(Math.toRadians(-180)))
+            // Slon obíhá kolem gridu ve vertikální rovině (osa Y+Z)
+            // bez vlastní rotace - jen pohyb pozice po kružnici
+            double orbitRadius = 10;
+            double orbitY = Math.sin(orbitAngle) * orbitRadius;
+            double orbitZ = Math.cos(orbitAngle) * orbitRadius;
+            float[] modelElephant = new Mat4Transl(0, orbitY, orbitZ)
+                    .mul(new Mat4RotX(Math.toRadians(180)))
                     .mul(new Mat4Scale(0.01))
                     .floatArray();
             setUniformMat4(shaderObj, "uModel",  modelElephant);
