@@ -57,7 +57,6 @@ public class Renderer extends AbstractRenderer {
     private boolean ambientOn = true, diffuseOn = true, specularOn = true, spotOn = true;
     private boolean animOn = true;
     private boolean ssaoOn = false;
-    private boolean showSSAO = false;
     private float time = 0.0f, orbitAngle = 0.0f;
 
     private float lightX = 1.5f, lightY = 1.5f, lightZ = 2.0f;
@@ -267,7 +266,6 @@ public class Renderer extends AbstractRenderer {
 
         setUniform3f(shaderLighting, "uLightPos",     lightPos);
         setUniform3f(shaderLighting, "uLightPosView", lightPosView);
-        setUniform1i(shaderLighting, "uShowSSAO",  showSSAO  ? 1 : 0);
         setUniform1i(shaderLighting, "uAmbient",   ambientOn  ? 1 : 0);
         setUniform1i(shaderLighting, "uDiffuse",   diffuseOn  ? 1 : 0);
         setUniform1i(shaderLighting, "uSpecular",  specularOn ? 1 : 0);
@@ -331,7 +329,7 @@ public class Renderer extends AbstractRenderer {
                 + String.format("%.1f", spotDirY) + ","
                 + String.format("%.1f", spotDirZ) + ") "
                 + String.format("%.0f", spotAngle) + "deg");
-        textRenderer.addStr2D(5, 160, "SSAO [Q]: " + b(ssaoOn) + "  Zobraz SSAO [E]: " + b(showSSAO));
+        textRenderer.addStr2D(5, 160, "SSAO [Q]: " + b(ssaoOn));
         textRenderer.addStr2D(width - 110, height - 5, "(c) PGRF UHK");
         textRenderer.draw();
     }
@@ -388,7 +386,6 @@ public class Renderer extends AbstractRenderer {
                 if (key == GLFW_KEY_4) spotOn     = !spotOn;
                 if (key == GLFW_KEY_T) animOn     = !animOn;
                 if (key == GLFW_KEY_Q) ssaoOn     = !ssaoOn;
-                if (key == GLFW_KEY_E) { showSSAO = !showSSAO; if (showSSAO) ssaoOn = true; }
                 if (key == GLFW_KEY_I) lightY += 0.2f; if (key == GLFW_KEY_K) lightY -= 0.2f;
                 if (key == GLFW_KEY_J) lightX -= 0.2f; if (key == GLFW_KEY_L) lightX += 0.2f;
                 if (key == GLFW_KEY_U) lightZ += 0.2f; if (key == GLFW_KEY_O) lightZ -= 0.2f;
