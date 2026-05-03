@@ -14,6 +14,8 @@ uniform float uTime;     // animace (mění se v čase)
 out vec2  vUV;
 out vec3  vNormal;
 out vec3  vWorldPos;
+out vec3  vViewPos;    // pozice ve view space
+out vec3  vViewNormal; // normála ve view space
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  PARAMETRICKÉ FUNKCE
@@ -126,6 +128,12 @@ void main() {
     // Normála transformovaná správně (transpose(inverse(model)))
     mat3 normalMat = transpose(inverse(mat3(uModel)));
     vNormal = normalize(normalMat * computeNormal(s, t));
+
+    // Pozice a normála ve view space
+    vec4 viewPos4 = uView * worldPos4;
+    vViewPos = viewPos4.xyz;
+    mat3 viewNormalMat = transpose(inverse(mat3(uView * uModel)));
+    vViewNormal = normalize(viewNormalMat * computeNormal(s, t));
 
     gl_Position = uProj * uView * worldPos4;
 }

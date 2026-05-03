@@ -11,6 +11,8 @@ uniform mat4 uProj;
 out vec2  vUV;
 out vec3  vNormal;
 out vec3  vWorldPos;
+out vec3  vViewPos;
+out vec3  vViewNormal;
 
 void main() {
     vec4 worldPos4 = uModel * vec4(inPosition, 1.0);
@@ -19,6 +21,11 @@ void main() {
 
     mat3 normalMat = transpose(inverse(mat3(uModel)));
     vNormal = normalize(normalMat * inNormal);
+
+    vec4 viewPos4 = uView * worldPos4;
+    vViewPos = viewPos4.xyz;
+    mat3 viewNormalMat = transpose(inverse(mat3(uView * uModel)));
+    vViewNormal = normalize(viewNormalMat * inNormal);
 
     gl_Position = uProj * uView * worldPos4;
 }

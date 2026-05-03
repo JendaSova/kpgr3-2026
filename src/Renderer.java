@@ -61,6 +61,12 @@ public class Renderer extends AbstractRenderer {
     private float lightY =  1.5f;
     private float lightZ =  2.0f;
 
+    // Reflektor — směr klávesami YGHB, úhel +-  klávesami ZX
+    private float spotDirX =  0.0f;
+    private float spotDirY =  0.0f;
+    private float spotDirZ = -1.0f;
+    private float spotAngle = 30.0f;  // polovina kužele ve stupních (5-89)
+
     // Pohyb
     private boolean moveW, moveS, moveA, moveD;
 
@@ -141,6 +147,9 @@ public class Renderer extends AbstractRenderer {
         setUniform1i(shaderGrid, "uDiffuse",  diffuseOn  ? 1 : 0);
         setUniform1i(shaderGrid, "uSpecular", specularOn ? 1 : 0);
         setUniform1i(shaderGrid, "uSpot",     spotOn     ? 1 : 0);
+        float[] spotDir = {spotDirX, spotDirY, spotDirZ};
+        setUniform3f(shaderGrid, "uSpotDir",   spotDir);
+        setUniform1f(shaderGrid, "uSpotAngle", spotAngle);
 
         // Model matice — první těleso (identita)
         float[] modelId = new Mat4Identity().floatArray();
@@ -183,16 +192,16 @@ public class Renderer extends AbstractRenderer {
             elephant.getBuffers().draw(GL_TRIANGLES, shaderObj);
         }
 
-//        // ══ Render značky světla ══
-//        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//        glUseProgram(shaderLight);
-//        float[] modelLight = new Mat4Transl(lightX, lightY, lightZ)
-//                .mul(new Mat4Scale(0.1))
-//                .floatArray();
-//        setUniformMat4(shaderLight, "uModel", modelLight);
-//        setUniformMat4(shaderLight, "uView",  viewArr);
-//        setUniformMat4(shaderLight, "uProj",  projArr);
-//        lightMarker.getBuffers().draw(GL_TRIANGLES, shaderLight);
+        // ══ Render značky světla ══
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glUseProgram(shaderLight);
+        float[] modelLight = new Mat4Transl(lightX, lightY, lightZ)
+                .mul(new Mat4Scale(0.1))
+                .floatArray();
+        setUniformMat4(shaderLight, "uModel", modelLight);
+        setUniformMat4(shaderLight, "uView",  viewArr);
+        setUniformMat4(shaderLight, "uProj",  projArr);
+        lightMarker.getBuffers().draw(GL_TRIANGLES, shaderLight);
 
         // ── WSAD pohyb ──
         double speed = 0.05;
@@ -210,7 +219,12 @@ public class Renderer extends AbstractRenderer {
         textRenderer.addStr2D(5, 80, "Projekce: " + (perspectiveProj ? "perspektivní" : "ortogonální") + "  [P]");
         textRenderer.addStr2D(5, 100,"Ambient[1] Diffuse[2] Specular[3] Spot[4]: "
                 + b(ambientOn) + " " + b(diffuseOn) + " " + b(specularOn) + " " + b(spotOn));
-        textRenderer.addStr2D(5, 120,"Animace [T]: " + b(animOn) + "  Světlo IJKL+UO");
+        textRenderer.addStr2D(5, 120,"Animace [T]: " + b(animOn) + "  Svetlo IJKL+UO");
+        textRenderer.addStr2D(5, 140,"Spot smer Y/H/G/B: ("
+                + String.format("%.1f", spotDirX) + ","
+                + String.format("%.1f", spotDirY) + ","
+                + String.format("%.1f", spotDirZ) + ")  Uhel Z/X: "
+                + String.format("%.0f", spotAngle) + "deg");
         textRenderer.addStr2D(width - 110, height - 5, "(c) PGRF UHK");
         textRenderer.draw();
     }
@@ -231,12 +245,14 @@ public class Renderer extends AbstractRenderer {
         return "Body";
     }
     private String getFragModeName() {
-        if (fragMode == 0) return "Textura+Osvetleni";
-        if (fragMode == 1) return "Normala";
-        if (fragMode == 2) return "Pozice XYZ";
-        if (fragMode == 3) return "Hloubka Z";
-        if (fragMode == 4) return "UV souradnice";
-        if (fragMode == 5) return "Difuzni slozka";
+        if (fragMode == 0) return "0: Osvetleni+Textura";
+        if (fragMode == 1) return "1: Normala (view space)";
+        if (fragMode == 2) return "2: Pozice (view space)";
+        if (fragMode == 3) return "3: Hloubka (depth buffer)";
+        if (fragMode == 4) return "4: UV souradnice";
+        if (fragMode == 5) return "5: Osvetleni bez textury";
+        if (fragMode == 6) return "6: Vzdalenost od svetla";
+        if (fragMode == 7) return "7: Textura RGBA";
         return "?";
     }
     private String b(boolean v) { return v ? "ON" : "off"; }
@@ -284,7 +300,7 @@ public class Renderer extends AbstractRenderer {
                 // Mód zobrazení
                 if (key == GLFW_KEY_M) renderMode = (renderMode + 1) % 3;
                 // Frag mód
-                if (key == GLFW_KEY_N) fragMode = (fragMode + 1) % 6;
+                if (key == GLFW_KEY_N) fragMode = (fragMode + 1) % 8;
                 // Projekce
                 if (key == GLFW_KEY_P) {
                     perspectiveProj = !perspectiveProj;
@@ -308,6 +324,15 @@ public class Renderer extends AbstractRenderer {
                 if (key == GLFW_KEY_L) lightX += 0.2f;
                 if (key == GLFW_KEY_U) lightZ += 0.2f;
                 if (key == GLFW_KEY_O) lightZ -= 0.2f;
+
+                // Směr reflektoru — klávesy Y/H (osa X), G/B (osa Y)
+                if (key == GLFW_KEY_Y) { spotDirX += 0.1f; }
+                if (key == GLFW_KEY_H) { spotDirX -= 0.1f; }
+                if (key == GLFW_KEY_G) { spotDirY += 0.1f; }
+                if (key == GLFW_KEY_B) { spotDirY -= 0.1f; }
+                // Úhel reflektoru — klávesy Z (větší) / X (menší)
+                if (key == GLFW_KEY_Z) spotAngle = Math.min(spotAngle + 2.0f, 89.0f);
+                if (key == GLFW_KEY_X) spotAngle = Math.max(spotAngle - 2.0f,  5.0f);
             }
         }
     };
@@ -336,6 +361,14 @@ public class Renderer extends AbstractRenderer {
                     glfwGetCursorPos(window, xb, yb);
                     mouseX = xb[0]; mouseY = yb[0];
                 }
+            }
+            // Kliknutí kolečkem = reset kamery na výchozí pozici
+            if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS) {
+                camera = new Camera()
+                        .withPosition(new Vec3D(0, -3, 1.5))
+                        .withAzimuth(Math.toRadians(90))
+                        .withZenith(Math.toRadians(-20))
+                        .withFirstPerson(true);
             }
         }
     };
