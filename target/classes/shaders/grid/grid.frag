@@ -33,7 +33,7 @@ vec3 blinnPhong(vec3 baseColor) {
     // ── Ambientní ────────────────────────────────────────────────────────────
     vec3 ambient = vec3(0.0);
     if (uAmbient == 1) {
-        ambient = 0.15 * baseColor;
+        ambient = 0.5 * baseColor;
     }
 
     // ── Vzdálenost a útlum prostředí ─────────────────────────────────────────

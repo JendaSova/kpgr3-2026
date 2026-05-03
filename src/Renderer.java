@@ -166,7 +166,7 @@ public class Renderer extends AbstractRenderer {
             glUseProgram(shaderObj);
             // Slon obíhá kolem gridu ve vertikální rovině (osa Y+Z)
             // bez vlastní rotace - jen pohyb pozice po kružnici
-            double orbitRadius = 10;
+            double orbitRadius = 150;
             double orbitY = Math.sin(orbitAngle) * orbitRadius;
             double orbitZ = Math.cos(orbitAngle) * orbitRadius;
             float[] modelElephant = new Mat4Transl(0, orbitY, orbitZ)
@@ -183,16 +183,16 @@ public class Renderer extends AbstractRenderer {
             elephant.getBuffers().draw(GL_TRIANGLES, shaderObj);
         }
 
-        // ══ Render značky světla ══
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glUseProgram(shaderLight);
-        float[] modelLight = new Mat4Transl(lightX, lightY, lightZ)
-                .mul(new Mat4Scale(0.1))
-                .floatArray();
-        setUniformMat4(shaderLight, "uModel", modelLight);
-        setUniformMat4(shaderLight, "uView",  viewArr);
-        setUniformMat4(shaderLight, "uProj",  projArr);
-        lightMarker.getBuffers().draw(GL_TRIANGLES, shaderLight);
+//        // ══ Render značky světla ══
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//        glUseProgram(shaderLight);
+//        float[] modelLight = new Mat4Transl(lightX, lightY, lightZ)
+//                .mul(new Mat4Scale(0.1))
+//                .floatArray();
+//        setUniformMat4(shaderLight, "uModel", modelLight);
+//        setUniformMat4(shaderLight, "uView",  viewArr);
+//        setUniformMat4(shaderLight, "uProj",  projArr);
+//        lightMarker.getBuffers().draw(GL_TRIANGLES, shaderLight);
 
         // ── WSAD pohyb ──
         double speed = 0.05;
