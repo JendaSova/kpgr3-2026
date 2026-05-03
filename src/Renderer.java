@@ -85,6 +85,12 @@ public class Renderer extends AbstractRenderer {
         shaderSSAO      = ShaderUtils.loadProgram("/shaders/ssao/quad", "/shaders/ssao/ssao", null, null, null, null, (p) -> {});
         shaderBlur      = ShaderUtils.loadProgram("/shaders/ssao/quad", "/shaders/ssao/blur", null, null, null, null, (p) -> {});
         shaderLighting  = ShaderUtils.loadProgram("/shaders/ssao/quad", "/shaders/ssao/lighting", null, null, null, null, (p) -> {});
+        System.out.println("=== SSAO SHADER IDs ===");
+        System.out.println("shaderGeometry: " + shaderGeometry);
+        System.out.println("shaderSSAO:     " + shaderSSAO);
+        System.out.println("shaderBlur:     " + shaderBlur);
+        System.out.println("shaderLighting: " + shaderLighting);
+        System.out.println("======================");
 
         grid           = new Grid(60, 60);
         lightMarker    = new Grid(4, 4);
