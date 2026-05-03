@@ -4,11 +4,15 @@
 in vec2  vUV;
 in vec3  vNormal;
 in vec3  vWorldPos;
+in vec3  vViewPos;
+in vec3  vViewNormal;
 
 // ─── Uniform proměnné ─────────────────────────────────────────────────────────
 uniform sampler2D uTexture;
 
-uniform int  uFragMode;    // 0=textuta+osvětlení, 1=normála, 2=pozice, 3=hloubka, 4=UV, 5=difúzní
+// uFragMode: 0=osvetleni+textura, 1=normala(view), 2=pozice(view), 3=hloubka,
+//             4=UV, 5=osvetleni bez textury, 6=vzdalenost od svetla, 7=textura RGBA
+uniform int  uFragMode;
 
 // Osvětlení
 uniform vec3 uLightPos;
@@ -17,6 +21,8 @@ uniform int  uAmbient;
 uniform int  uDiffuse;
 uniform int  uSpecular;
 uniform int  uSpot;
+uniform vec3 uSpotDir;    // směr reflektoru (normalizovaný)
+uniform float uSpotAngle; // polovina kužele ve stupních
 
 // ─── Výstup ───────────────────────────────────────────────────────────────────
 out vec4 outColor;
@@ -42,11 +48,10 @@ vec3 blinnPhong(vec3 baseColor) {
     float attenuation = 1.0 / (kC + kL * dist + kQ * dist * dist);
 
     // ── Reflektorový efekt (spot light) ──────────────────────────────────────
-    vec3  spotDir   = normalize(vec3(0.0, 0.0, -1.0)); // směr reflektoru dolů
-    float spotAngle = 30.0;                             // polovina kužele ve stupních
-    float spotOuter = 35.0;
+    vec3  spotDir   = normalize(uSpotDir);   // směr z CPU (ovládaný klávesami)
+    float spotOuter = uSpotAngle + 5.0;      // vnější kužel o 5° větší
     float cosTheta  = dot(-L, spotDir);
-    float cosCutoff = cos(radians(spotAngle));
+    float cosCutoff = cos(radians(uSpotAngle));
     float cosOuter  = cos(radians(spotOuter));
     float spotFactor = 1.0;
     if (uSpot == 1) {
@@ -78,37 +83,48 @@ vec3 blinnPhong(vec3 baseColor) {
 void main() {
     vec3 N = normalize(vNormal);
 
-    // ── DEBUG MÓDY ────────────────────────────────────────────────────────────
+    // 1) Normála v soustavě pozorovatele (view space)
     if (uFragMode == 1) {
-        // Normála jako barva
-        outColor = vec4(N * 0.5 + 0.5, 1.0);
+        outColor = vec4(normalize(vViewNormal) * 0.5 + 0.5, 1.0);
         return;
     }
+    // 2) Pozice v souřadnicích pozorovatele (view space)
     if (uFragMode == 2) {
-        // Pozice jako barva (remapovaná na <0,1>)
-        outColor = vec4(fract(vWorldPos * 0.5 + 0.5), 1.0);
+        outColor = vec4(fract(abs(vViewPos) * 0.2), 1.0);
         return;
     }
+    // 3) Hloubka z depth bufferu
     if (uFragMode == 3) {
-        // Hloubka Z (depth)
         float depth = gl_FragCoord.z;
         outColor = vec4(depth, depth, depth, 1.0);
         return;
     }
+    // 4) UV souřadnice
     if (uFragMode == 4) {
-        // UV souřadnice
         outColor = vec4(vUV, 0.0, 1.0);
         return;
     }
+    // 5) Osvětlení bez textury (neutrální šedá barva)
     if (uFragMode == 5) {
-        // Difúzní složka (bez textury)
-        vec3 L = normalize(uLightPos - vWorldPos);
-        float NdotL = max(dot(N, L), 0.0);
-        outColor = vec4(vec3(NdotL), 1.0);
+        vec3 baseColor = vec3(0.7, 0.7, 0.7);
+        vec3 lit = blinnPhong(baseColor);
+        outColor = vec4(lit, 1.0);
+        return;
+    }
+    // 6) Vzdálenost od zdroje světla (zelena=blizko, cervena=daleko)
+    if (uFragMode == 6) {
+        float dist = length(uLightPos - vWorldPos);
+        float norm = clamp(dist / 10.0, 0.0, 1.0);
+        outColor = vec4(norm, 1.0 - norm, 0.0, 1.0);
+        return;
+    }
+    // 7) Textura RGBA bez osvětlení
+    if (uFragMode == 7) {
+        outColor = texture(uTexture, vUV);
         return;
     }
 
-    // ── PLNÉ OSVĚTLENÍ + TEXTURA (uFragMode == 0) ─────────────────────────────
+    // 0) Kompletní osvětlení s texturou (výchozí)
     vec4 texColor = texture(uTexture, vUV);
     vec3 lit = blinnPhong(texColor.rgb);
     outColor = vec4(lit, texColor.a);
